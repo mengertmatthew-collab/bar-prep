@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bar Prep Flashcards</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #4f72ff;
+    --accent2: #7c5cfc;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e8eaf6;
+    --text2: #9198c7;
+    --text3: #5a6191;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  /* ── HEADER ── */
+  header { padding: 20px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -.3px; }
+  header .pill { background: var(--accent); color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: .5px; }
+
+  /* ── SUBJECT FILTER ── */
+  #filter-bar { padding: 16px 32px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+  .filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text2); font-size: .8rem; font-weight: 600; padding: 6px 14px; border-radius: 99px; cursor: pointer; transition: all .15s; }
+  .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── HOME SCREEN ── */
+  #home { padding: 40px 32px; max-width: 900px; margin: 0 auto; }
+  #home h2 { font-size: 1.5rem; margin-bottom: 8px; }
+  #home p { color: var(--text2); margin-bottom: 32px; font-size: .9rem; }
+  .stats-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 36px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; flex: 1; min-width: 140px; }
+  .stat-card .num { font-size: 2rem; font-weight: 800; color: var(--accent); }
+  .stat-card .label { font-size: .8rem; color: var(--text2); margin-top: 4px; }
+  .mode-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .mode-btn { flex: 1; max-width: 220px; padding: 12px 18px; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--surface); color: var(--text2); font-size: .88rem; font-weight: 600; cursor: pointer; transition: all .15s; text-align: left; }
+  .mode-btn .mode-title { font-size: .95rem; color: var(--text); font-weight: 700; margin-bottom: 2px; }
+  .mode-btn .mode-desc { font-size: .75rem; color: var(--text3); }
+  .mode-btn.active { border-color: var(--accent); background: rgba(79,114,255,.12); }
+  .mode-btn.active .mode-title { color: var(--accent); }
+  #start-btn { background: var(--accent); color: #fff; border: none; font-size: 1rem; font-weight: 700; padding: 14px 36px; border-radius: var(--radius); cursor: pointer; transition: opacity .15s; }
+  #start-btn:hover { opacity: .88; }
+  .subject-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 32px; }
+  .subject-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; cursor: pointer; transition: border-color .15s; }
+  .subject-card:hover { border-color: var(--accent); }
+  .subject-card .sname { font-size: .9rem; font-weight: 700; margin-bottom: 4px; }
+  .subject-card .scount { font-size: .78rem; color: var(--text2); }
+  .subject-card .sbar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+  .subject-card .sbar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s; }
+
+  /* ── API KEY ── */
+  .api-key-btn { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text3); font-size: .75rem; padding: 5px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all .15s; }
+  .api-key-btn:hover { border-color: var(--accent); color: var(--text); }
+  .api-key-btn.set { border-color: var(--green); color: var(--green); }
+  .api-key-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 100; align-items: center; justify-content: center; }
+  .api-key-modal.open { display: flex; }
+  .api-key-box { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 32px; max-width: 480px; width: 90%; }
+  .api-key-box h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+  .api-key-box p { font-size: .82rem; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
+  .api-key-input { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; color: var(--text); font-size: .88rem; padding: 10px 14px; outline: none; font-family: monospace; }
+  .api-key-input:focus { border-color: var(--accent); }
+  .api-key-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .api-key-save { background: var(--accent); color: #fff; border: none; padding: 10px 22px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: .88rem; }
+  .api-key-clear { background: none; border: 1px solid var(--border); color: var(--text2); padding: 10px 16px; border-radius: 10px; font-size: .88rem; cursor: pointer; }
+  .api-key-cancel { background: none; border: 1px solid var(--border); color: var(--text2); padding: 10px 16px; border-radius: 10px; font-size: .88rem; cursor: pointer; margin-left: auto; }
+
+  /* ── WRITE MODE ── */
+  .write-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 18px; width: 100%; max-width: 760px; padding: 36px 40px; margin-bottom: 20px; }
+  .write-question { font-size: 1.12rem; line-height: 1.65; color: var(--text); margin-bottom: 24px; }
+  .write-textarea { width: 100%; min-height: 160px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font-size: .95rem; font-family: inherit; line-height: 1.6; padding: 14px 16px; resize: vertical; outline: none; transition: border-color .15s; }
+  .write-textarea:focus { border-color: var(--accent); }
+  .write-textarea::placeholder { color: var(--text3); }
+  .compare-btn-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+  #compare-btn { background: var(--accent); color: #fff; border: none; font-size: .95rem; font-weight: 700; padding: 12px 28px; border-radius: var(--radius); cursor: pointer; transition: opacity .15s; }
+  #compare-btn:hover { opacity: .88; }
+  #compare-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .compare-hint { font-size: .75rem; color: var(--text3); }
+
+  /* ── AI FEEDBACK PANEL ── */
+  .feedback-panel { display: none; margin-top: 24px; }
+  .feedback-panel.visible { display: block; }
+  .feedback-loading { display: flex; align-items: center; gap: 10px; color: var(--text2); font-size: .88rem; padding: 16px 0; }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .score-badge { display: inline-flex; align-items: baseline; gap: 4px; margin-bottom: 20px; }
+  .score-num { font-size: 3rem; font-weight: 900; line-height: 1; }
+  .score-denom { font-size: 1.1rem; color: var(--text2); font-weight: 600; }
+  .score-label-ai { font-size: .78rem; color: var(--text2); margin-left: 10px; }
+  .feedback-summary { font-size: .9rem; color: var(--text2); line-height: 1.65; margin-bottom: 20px; font-style: italic; }
+  .feedback-section { margin-bottom: 18px; }
+  .feedback-section-title { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .feedback-section-title.covered { color: var(--green); }
+  .feedback-section-title.missed { color: var(--red); }
+  .feedback-items { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .feedback-item { font-size: .88rem; line-height: 1.55; padding: 9px 14px; border-radius: 8px; display: flex; gap: 10px; align-items: flex-start; }
+  .feedback-item.covered { background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.2); color: var(--text); }
+  .feedback-item.missed { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2); color: var(--text); }
+  .feedback-item .fi-icon { flex-shrink: 0; font-size: .85rem; margin-top: 1px; }
+  .model-answer-toggle { background: none; border: none; color: var(--text3); font-size: .78rem; cursor: pointer; padding: 8px 0; display: flex; align-items: center; gap: 5px; margin-top: 10px; }
+  .model-answer-toggle:hover { color: var(--text2); }
+  .model-answer-full { display: none; margin-top: 10px; background: rgba(34,197,94,.06); border: 1.5px solid rgba(34,197,94,.2); border-radius: 10px; padding: 16px 18px; font-size: .85rem; line-height: 1.65; white-space: pre-wrap; color: var(--text); }
+  .model-answer-full.open { display: block; }
+
+  /* plain compare (no API key) */
+  .compare-panel { display: none; margin-top: 22px; gap: 16px; }
+  .compare-panel.visible { display: grid; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 600px) { .compare-panel.visible { grid-template-columns: 1fr; } }
+  .compare-col { border-radius: 12px; padding: 20px; font-size: .88rem; line-height: 1.65; white-space: pre-wrap; }
+  .compare-col-yours { background: rgba(79,114,255,.08); border: 1.5px solid rgba(79,114,255,.25); }
+  .compare-col-model { background: rgba(34,197,94,.07); border: 1.5px solid rgba(34,197,94,.25); }
+  .compare-col-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .compare-col-yours .compare-col-label { color: var(--accent); }
+  .compare-col-model .compare-col-label { color: var(--green); }
+  .compare-col-text { color: var(--text); }
+
+  .write-action-row { display: none; gap: 16px; justify-content: center; width: 100%; max-width: 540px; margin-top: 6px; }
+  .write-action-row.visible { display: flex; }
+
+  /* ── FLASHCARD SCREEN ── */
+  #quiz { display: none; flex-direction: column; align-items: center; padding: 28px 16px; min-height: calc(100vh - 130px); }
+  .quiz-top { width: 100%; max-width: 760px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .quiz-top .back-btn { background: none; border: 1px solid var(--border); color: var(--text2); font-size: .82rem; padding: 7px 14px; border-radius: 8px; cursor: pointer; }
+  .quiz-top .back-btn:hover { border-color: var(--accent); color: var(--text); }
+  .progress-wrap { flex: 1; margin: 0 16px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: .75rem; color: var(--text3); margin-bottom: 5px; }
+  .progress-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width .3s; }
+  .score-live { font-size: .82rem; color: var(--text2); white-space: nowrap; }
+  .score-live span.g { color: var(--green); font-weight: 700; }
+  .score-live span.r { color: var(--red); font-weight: 700; }
+
+  /* ── CARD ── */
+  .card-wrap { perspective: 1200px; width: 100%; max-width: 760px; margin-bottom: 28px; }
+  .card { position: relative; width: 100%; min-height: 300px; cursor: pointer; transform-style: preserve-3d; transition: transform .45s cubic-bezier(.4,0,.2,1); border-radius: 18px; }
+  .card.flipped { transform: rotateY(180deg); }
+  .card-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 18px; border: 1.5px solid var(--border); padding: 40px 44px; display: flex; flex-direction: column; justify-content: center; }
+  .card-front { background: var(--surface); }
+  .card-back { background: var(--surface2); transform: rotateY(180deg); }
+  .card-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 18px; }
+  .card-label.answer-label { color: var(--accent2); }
+  .card-subject-tag { display: inline-block; font-size: .7rem; font-weight: 700; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); padding: 3px 10px; border-radius: 99px; margin-bottom: 14px; align-self: flex-start; }
+  .card-back .card-subject-tag { background: var(--surface); }
+  .card-text { font-size: 1.12rem; line-height: 1.65; color: var(--text); }
+  .card-hint { margin-top: 20px; font-size: .78rem; color: var(--text3); text-align: center; }
+
+  /* ── ACTION BUTTONS ── */
+  .action-row { display: flex; gap: 16px; justify-content: center; width: 100%; max-width: 540px; }
+  .action-btn { flex: 1; padding: 14px 0; border: none; border-radius: var(--radius); font-size: .95rem; font-weight: 700; cursor: pointer; transition: opacity .15s, transform .1s; }
+  .action-btn:hover { opacity: .88; transform: translateY(-1px); }
+  .action-btn:active { transform: translateY(0); }
+  .btn-wrong { background: #3d1c1c; color: var(--red); border: 1.5px solid #5e2a2a; }
+  .btn-right { background: #1a3a28; color: var(--green); border: 1.5px solid #2a5c3f; }
+  .flip-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 11px 28px; border-radius: var(--radius); font-size: .88rem; font-weight: 600; cursor: pointer; display: block; margin: 0 auto 22px; transition: border-color .15s; }
+  .flip-btn:hover { border-color: var(--accent); }
+
+  /* ── RESULTS ── */
+  #results { display: none; padding: 48px 32px; max-width: 700px; margin: 0 auto; text-align: center; }
+  #results h2 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+  #results .sub { color: var(--text2); margin-bottom: 36px; font-size: .95rem; }
+  .score-big { font-size: 5rem; font-weight: 900; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; margin-bottom: 8px; }
+  .score-label { color: var(--text2); font-size: .9rem; margin-bottom: 36px; }
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 36px; }
+  .result-cell { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .result-cell .rnum { font-size: 2rem; font-weight: 800; }
+  .result-cell .rlabel { font-size: .8rem; color: var(--text2); margin-top: 4px; }
+  .result-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .result-actions button { padding: 12px 24px; border-radius: var(--radius); font-size: .9rem; font-weight: 700; cursor: pointer; border: none; transition: opacity .15s; }
+  .btn-retry-wrong { background: #3d1c1c; color: var(--red); border: 1.5px solid #5e2a2a; }
+  .btn-retry-all { background: var(--accent); color: #fff; }
+  .btn-home { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .result-actions button:hover { opacity: .85; }
+
+  /* ── SUBJECT BREAKDOWN ── */
+  .breakdown { margin-top: 32px; text-align: left; }
+  .breakdown h3 { font-size: .9rem; font-weight: 700; color: var(--text2); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .5px; }
+  .breakdown-row { display: flex; align-items: center; margin-bottom: 10px; gap: 10px; font-size: .83rem; }
+  .breakdown-name { width: 180px; color: var(--text2); flex-shrink: 0; }
+  .breakdown-bar { flex: 1; height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .breakdown-fill { height: 100%; border-radius: 4px; }
+  .breakdown-pct { width: 36px; text-align: right; font-weight: 700; font-size: .8rem; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Bar Prep Flashcards</h1>
+  <span class="pill">MEE</span>
+  <button class="api-key-btn" id="api-key-btn" onclick="openApiModal()">
+    <span id="api-key-icon">🔑</span> <span id="api-key-label">Add API Key</span>
+  </button>
+</header>
+
+<div class="api-key-modal" id="api-key-modal">
+  <div class="api-key-box">
+    <h3>Anthropic API Key</h3>
+    <p>Used locally in your browser to grade write-mode answers with AI. Your key is stored only in localStorage and never sent anywhere except directly to the Anthropic API.</p>
+    <input class="api-key-input" id="api-key-input" type="password" placeholder="sk-ant-..." spellcheck="false" />
+    <div class="api-key-actions">
+      <button class="api-key-save" onclick="saveApiKey()">Save Key</button>
+      <button class="api-key-clear" onclick="clearApiKey()">Clear</button>
+      <button class="api-key-cancel" onclick="closeApiModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="filter-bar"></div>
+
+<div id="home">
+  <h2>Ready to study?</h2>
+  <p>Select subjects above, choose a mode, then start.</p>
+  <div class="mode-row">
+    <button class="mode-btn active" id="mode-flip" onclick="setMode('flip')">
+      <div class="mode-title">Flip Mode</div>
+      <div class="mode-desc">Click to reveal answer, mark yourself</div>
+    </button>
+    <button class="mode-btn" id="mode-write" onclick="setMode('write')">
+      <div class="mode-title">Write Mode</div>
+      <div class="mode-desc">Type your answer, compare to model</div>
+    </button>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="num" id="stat-total">0</div><div class="label">Total Cards</div></div>
+    <div class="stat-card"><div class="num" id="stat-subjects">0</div><div class="label">Subjects</div></div>
+    <div class="stat-card"><div class="num" id="stat-filtered">0</div><div class="label">Selected</div></div>
+  </div>
+  <button id="start-btn">Start Test Mode →</button>
+  <div class="subject-grid" id="subject-grid"></div>
+</div>
+
+<div id="quiz">
+  <div class="quiz-top">
+    <button class="back-btn" onclick="goHome()">← Home</button>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="prog-label">Card 1 of N</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+    <div class="score-live"><span class="g" id="live-right">0</span> / <span class="r" id="live-wrong">0</span></div>
+  </div>
+
+  <div class="card-wrap">
+    <div class="card" id="flashcard" onclick="flipCard()">
+      <div class="card-face card-front">
+        <div class="card-label">Question</div>
+        <span class="card-subject-tag" id="card-subject-tag"></span>
+        <div class="card-text" id="card-question"></div>
+        <div class="card-hint">Click card to reveal answer</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-label answer-label">Answer</div>
+        <span class="card-subject-tag" id="card-subject-tag-back"></span>
+        <div class="card-text" id="card-answer"></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="flip-btn" onclick="flipCard()" id="flip-toggle">Flip Card</button>
+
+  <div class="action-row" id="action-row" style="display:none">
+    <button class="action-btn btn-wrong" onclick="markCard(false)">✗ Missed it</button>
+    <button class="action-btn btn-right" onclick="markCard(true)">✓ Got it</button>
+  </div>
+
+  <!-- Write mode card -->
+  <div class="write-card" id="write-card" style="display:none">
+    <div class="card-label">Question</div>
+    <span class="card-subject-tag" id="write-subject-tag" style="margin-bottom:14px;display:inline-block"></span>
+    <div class="write-question" id="write-question"></div>
+    <textarea class="write-textarea" id="write-textarea" placeholder="Type your answer here…" onkeydown="handleWriteKey(event)"></textarea>
+    <div class="compare-btn-row">
+      <button id="compare-btn" onclick="showComparison()">Grade Answer →</button>
+      <span class="compare-hint" id="compare-hint"></span>
+    </div>
+
+    <!-- AI feedback panel -->
+    <div class="feedback-panel" id="feedback-panel">
+      <div class="feedback-loading" id="feedback-loading" style="display:none">
+        <div class="spinner"></div> Grading your answer…
+      </div>
+      <div id="feedback-content" style="display:none">
+        <div style="display:flex;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+          <div class="score-badge">
+            <span class="score-num" id="ai-score">—</span>
+            <span class="score-denom">/10</span>
+            <span class="score-label-ai">AI Score</span>
+          </div>
+        </div>
+        <div class="feedback-summary" id="ai-summary"></div>
+        <div class="feedback-section" id="covered-section" style="display:none">
+          <div class="feedback-section-title covered">✓ What you got right</div>
+          <ul class="feedback-items" id="covered-list"></ul>
+        </div>
+        <div class="feedback-section" id="missed-section" style="display:none">
+          <div class="feedback-section-title missed">✗ What you missed or should add</div>
+          <ul class="feedback-items" id="missed-list"></ul>
+        </div>
+        <button class="model-answer-toggle" onclick="toggleModelAnswer()">▸ Show full model answer</button>
+        <div class="model-answer-full" id="model-answer-full"></div>
+      </div>
+    </div>
+
+    <!-- Plain compare (no API key fallback) -->
+    <div class="compare-panel" id="compare-panel">
+      <div class="compare-col compare-col-yours">
+        <div class="compare-col-label">Your Answer</div>
+        <div class="compare-col-text" id="your-answer-text"></div>
+      </div>
+      <div class="compare-col compare-col-model">
+        <div class="compare-col-label">Model Answer</div>
+        <div class="compare-col-text" id="model-answer-text"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="write-action-row" id="write-action-row">
+    <button class="action-btn btn-wrong" onclick="markCard(false)">✗ Missed it</button>
+    <button class="action-btn btn-right" onclick="markCard(true)">✓ Got it</button>
+  </div>
+</div>
+
+<div id="results">
+  <h2 id="result-title">Round Complete!</h2>
+  <p class="sub" id="result-sub"></p>
+  <div class="score-big" id="score-pct"></div>
+  <div class="score-label" id="score-fraction"></div>
+  <div class="result-grid">
+    <div class="result-cell"><div class="rnum" style="color:var(--green)" id="r-correct">0</div><div class="rlabel">Correct</div></div>
+    <div class="result-cell"><div class="rnum" style="color:var(--red)" id="r-wrong">0</div><div class="rlabel">Missed</div></div>
+  </div>
+  <div class="result-actions">
+    <button class="btn-retry-wrong" id="btn-retry-wrong" onclick="retryWrong()">Retry Missed Cards</button>
+    <button class="btn-retry-all" onclick="retryAll()">Start Over</button>
+    <button class="btn-home" onclick="goHome()">← Home</button>
+  </div>
+  <div class="breakdown" id="breakdown"></div>
+</div>
+
+<script>
+const CARDS = [
+  // ════════════════════════════════════════════════
+  // AGENCY & PARTNERSHIP
+  // ════════════════════════════════════════════════
+  { id:1, subject:"Agency & Partnership", sub:"Agency", q:"What two elements must be present to create an agency relationship?", a:"(1) Voluntary consent (express or implied) by both parties to enter the relationship, AND (2) the agent is subject to the principal's control. The principal–agent relationship is fiduciary in nature: the agent acts on the principal's behalf and is subject to the principal's control." },
+  { id:2, subject:"Agency & Partnership", sub:"Agency", q:"How is an agency relationship terminated by the parties vs. by operation of law?", a:"By the parties: (a) either party manifests desire to cease the relationship (effective on receipt of notice); (b) the express term expires; or (c) the purpose is fulfilled.\n\nBy operation of law: (a) death of either party; (b) loss of capacity of either party; or (c) the agent materially breaches a fiduciary duty." },
+  { id:3, subject:"Agency & Partnership", sub:"Authority", q:"What is actual authority, and what are its two forms?", a:"Actual authority exists when the agent reasonably believes, based on the principal's manifestations, that the principal wants the agent to act.\n\n• Express: principal directs agent to engage in the precise task.\n• Implied: agent reasonably interprets the principal's words or conduct — includes incidental authority (actions reasonably necessary to accomplish the expressly authorized task)." },
+  { id:4, subject:"Agency & Partnership", sub:"Authority", q:"What is apparent authority and when does it NOT exist?", a:"Apparent authority exists when: (1) the principal holds the agent out as having authority, AND (2) the principal's conduct causes a third party to reasonably rely on the agent's apparent authority.\n\nApparent authority does NOT exist if the third party knows the agent lacks actual authority.\n\nNote: an undisclosed principal CANNOT create apparent authority because the third party is unaware of the principal's existence." },
+  { id:5, subject:"Agency & Partnership", sub:"Authority", q:"What is inherent agency power and when do courts apply it?", a:"Inherent agency power allows courts to hold a principal liable even when the agent acted WITHOUT actual or apparent authority, based on equitable considerations. Courts apply it when: (1) an agency relationship exists, AND (2) the totality of circumstances weighs against forcing the third party to absorb all the damages. Most commonly applied to undisclosed principals." },
+  { id:6, subject:"Agency & Partnership", sub:"Vicarious Liability", q:"What is respondeat superior and what are its two requirements?", a:"Under respondeat superior, an employer (principal) is vicariously liable for torts of an employee (agent) if:\n1. An employer-employee relationship exists (NOT independent contractor) — key factor is the extent of the employer's control over the employee's work.\n2. The tort occurs within the scope of employment — same general nature as authorized conduct, incidental to authorized conduct, within authorized time/space limits, conducted to serve the employer, and foreseeable.\n\nDetour (minor deviation) = still liable. Frolic (major deviation) = NOT liable." },
+  { id:7, subject:"Agency & Partnership", sub:"Vicarious Liability", q:"When is a principal generally liable for an independent contractor's torts? When are they NOT?", a:"Generally, a principal is NOT liable for torts of an independent contractor.\n\nExceptions — principal MAY be liable when an independent contractor:\n(1) Makes misrepresentations for the benefit of the principal;\n(2) Is engaged in abnormally dangerous activities; OR\n(3) Acts with apparent authority.\n\nKey factor distinguishing employee vs. IC: degree of control the principal exercises over the details of the work." },
+  { id:8, subject:"Agency & Partnership", sub:"Vicarious Liability", q:"What are the three requirements for a principal to ratify an agent's unauthorized act?", a:"A principal can ratify an agent's unauthorized conduct if:\n(1) The principal had knowledge of the material facts (the contract terms);\n(2) The agent purported to act on the principal's behalf; AND\n(3) The principal affirmed the conduct by manifesting intent to treat it as authorized (e.g., accepting the benefits of the unauthorized transaction)." },
+  { id:9, subject:"Agency & Partnership", sub:"Agency Duties", q:"What fiduciary duties does an agent owe to a principal?", a:"An agent owes three fiduciary duties to the principal:\n(1) Duty of Care — act with reasonable care and skill;\n(2) Duty of Loyalty — act for the principal's sole benefit; cannot place own interests above the principal's;\n(3) Duty of Obedience — act within actual authority and follow the principal's instructions." },
+  { id:10, subject:"Agency & Partnership", sub:"Partnership Formation", q:"When is a general partnership formed, and what is the key factor courts look to?", a:"A general partnership forms when (1) two or more persons (2) associate as co-owners (3) to carry on a business for profit. Intent to form a partnership is irrelevant.\n\nCourts look to: sharing of profits (creates a presumption of partnership unless profits are wages, rent, debt payment, or payment for services); joint ownership; and sharing of control." },
+  { id:11, subject:"Agency & Partnership", sub:"Partnership Formation", q:"How does a limited partnership differ from a general partnership regarding liability and formation?", a:"• General partnership: no limited liability — all partners are personally, jointly and severally liable for ALL debts.\n• Limited partnership: general partners retain full personal liability; limited partners are liable ONLY to the extent of their investment.\n\nFormation: a written certificate of limited partnership must be executed and filed with the Secretary of State (name, signatures of general partners, addresses of general partners, initial office, and agent for service of process)." },
+  { id:12, subject:"Agency & Partnership", sub:"Partnership Formation", q:"What is an LLP and what does it protect against?", a:"A limited liability partnership (LLP) limits a partner's personal liability for another partner's professional malpractice. A partner in an LLP remains personally liable if they: (1) committed the malpractice themselves, or (2) supervised or directed the person who committed the malpractice.\n\nFormation: approval by partners + filing a statement of qualification with the Secretary of State (does NOT create a new partnership)." },
+  { id:13, subject:"Agency & Partnership", sub:"Partner Liability", q:"What is the contract liability rule for general partners vs. limited partners?", a:"• General partners: jointly and severally liable for ALL debts and obligations of the partnership.\n• Limited partners: personally liable ONLY to the extent of their investment — but always liable for their own misconduct.\n\nEach partner is an agent of the partnership — acts in the ordinary course of business bind the partnership unless the partner lacks authority AND the other party has knowledge or notice of that lack of authority." },
+  { id:14, subject:"Agency & Partnership", sub:"Partner Duties", q:"What are the duty of care and duty of loyalty for partners?", a:"Duty of Care: each partner must REFRAIN from (1) grossly negligent or reckless conduct, (2) intentional misconduct, or (3) knowing violations of law.\n\nDuty of Loyalty: each partner must (1) act in good faith and fairly; (2) account for profits/property derived from partnership business; and (3) REFRAIN from competing with the partnership (even during dissolution) and from usurping partnership business opportunities." },
+  { id:15, subject:"Agency & Partnership", sub:"Dissolution", q:"What is the difference between dissolution under UPA vs. RUPA?", a:"UPA: any change in partner membership automatically triggers dissolution (unless there is an agreement to the contrary). Every partner has the power to dissolve at any time by withdrawing.\n\nRUPA: a partner's 'disassociation' does NOT automatically trigger dissolution except in (1) at-will partnerships (any member can disassociate and trigger dissolution) or (2) a partnership created for a specific term/undertaking. Remaining partners may buy out the withdrawing partner instead of winding up." },
+
+  // ════════════════════════════════════════════════
+  // CORPORATIONS & LLCs
+  // ════════════════════════════════════════════════
+  { id:16, subject:"Corporations & LLCs", sub:"Formation", q:"What must articles of incorporation contain, and what is de facto corporation vs. corporation by estoppel?", a:"Articles of incorporation must include: (1) the corporation's name; (2) the number of authorized shares; (3) the registered agent's name and address; and (4) the name and address of each incorporator.\n\nDe facto corporation: parties attempted to incorporate in good faith but failed — provides limited liability in most jurisdictions.\nCorporation by estoppel: a party who dealt with the entity as a corporation is estopped from denying its corporate status." },
+  { id:17, subject:"Corporations & LLCs", sub:"Piercing the Veil", q:"When will a court pierce the corporate veil to hold shareholders personally liable?", a:"Courts pierce the corporate veil to prevent fraud or injustice, typically when:\n(1) Alter ego / commingling: shareholders fail to observe corporate formalities (no separate books, commingling funds, treating corporate property as personal);\n(2) Undercapitalization: corporation is formed with insufficient capital to meet foreseeable liabilities; OR\n(3) Fraud: the corporate form is used to commit fraud or wrong a third party.\n\nParent-subsidiary context: a parent is not automatically liable for a subsidiary's debts; the subsidiary must be so dominated that it is the parent's 'alter ego.'" },
+  { id:18, subject:"Corporations & LLCs", sub:"Director Duties", q:"What is the business judgment rule (BJR)?", a:"The BJR presumes that directors acted in good faith, on an informed basis, and with the honest belief that the action was in the best interest of the corporation. Courts will NOT second-guess a business decision that satisfies the BJR.\n\nThe BJR is rebutted if the plaintiff shows the director: (1) was not disinterested; (2) was not adequately informed; or (3) did not act in good faith (e.g., failed to exercise any oversight)." },
+  { id:19, subject:"Corporations & LLCs", sub:"Director Duties", q:"What are the duty of care and duty of loyalty for directors and officers?", a:"Duty of Care: directors/officers must act with the care of an ordinarily prudent person in a similar position and in a similar manner. The BJR provides strong protection for disinterested, informed, good-faith decisions.\n\nDuty of Loyalty: directors/officers must act in the corporation's best interest and CANNOT profit at the corporation's expense. Includes:\n• Self-dealing transactions (must be fair to the corporation or approved by disinterested directors/shareholders);\n• Taking corporate opportunities (cannot usurp business opportunities without first offering them to the corporation)." },
+  { id:20, subject:"Corporations & LLCs", sub:"Director Duties", q:"What is the corporate opportunity doctrine?", a:"A director/officer cannot take a business opportunity that belongs to the corporation unless: (1) the opportunity is presented to the board and the board (by disinterested directors or shareholders) rejects it, OR (2) the corporation is financially unable to take the opportunity.\n\nFactors for whether an opportunity 'belongs' to the corporation: is it in the corporation's line of business, did the director learn of it in their corporate capacity, does the corporation have an expectancy or interest in it?" },
+  { id:21, subject:"Corporations & LLCs", sub:"Shareholder Rights", q:"What are the shareholder rights to inspect books and records?", a:"Shareholders have the right to inspect corporate books and records — but must show a proper purpose (a legitimate business reason related to their interests as a shareholder). Courts weigh the shareholder's purpose against the corporation's interest in keeping confidential business information.\n\nLarge shareholders (holding ≥5% for ≥6 months) generally have broader rights under most statutes." },
+  { id:22, subject:"Corporations & LLCs", sub:"Shareholder Rights", q:"What is a derivative suit and what are its requirements?", a:"A derivative suit is brought by a shareholder on behalf of the corporation (the corporation is the real party in interest) to recover for harms done to the corporation.\n\nRequirements:\n(1) The shareholder must own stock at the time of the alleged wrongdoing and throughout litigation (contemporaneous ownership);\n(2) The shareholder must make a demand on the board to take action (or show demand would be futile — e.g., board is interested or not independent);\n(3) Any recovery goes to the corporation, not the shareholder." },
+  { id:23, subject:"Corporations & LLCs", sub:"LLCs", q:"How do LLCs compare to corporations in terms of liability, management, and taxation?", a:"LLCs combine features of corporations and partnerships:\n• Liability: all members have limited liability (like corporate shareholders) — the LLC's debts do not personally bind members.\n• Management: can be member-managed (all members participate) or manager-managed (designated managers run the business).\n• Taxation: pass-through taxation by default (like a partnership) — profits/losses flow to members' personal returns without entity-level tax.\n• Formation: file articles of organization with the Secretary of State." },
+  { id:24, subject:"Corporations & LLCs", sub:"Mergers", q:"What shareholder rights arise in a merger?", a:"In a merger, shareholders of both corporations typically must vote to approve the transaction.\n\nAppraisal rights (dissenter's rights): shareholders who vote against the merger may demand the corporation purchase their shares at fair value. These rights are typically ONLY available if the merger requires a shareholder vote and the shares are not listed on a major exchange (or the corporation has fewer than 2,000 shareholders)." },
+
+  // ════════════════════════════════════════════════
+  // CIVIL PROCEDURE
+  // ════════════════════════════════════════════════
+  { id:25, subject:"Civil Procedure", sub:"Jurisdiction", q:"What are the two types of personal jurisdiction and what does each require?", a:"General jurisdiction: the defendant's contacts with the forum are so systematic and continuous that they can be sued there for ANY claim. For individuals: domicile. For corporations: state of incorporation OR principal place of business (the 'nerve center').\n\nSpecific jurisdiction: defendant's contacts with the forum arose from or are related to the claim. Requires minimum contacts such that exercising jurisdiction does not offend 'traditional notions of fair play and substantial justice' (International Shoe)." },
+  { id:26, subject:"Civil Procedure", sub:"Jurisdiction", q:"What are the requirements for diversity jurisdiction in federal court?", a:"(1) Complete diversity: every plaintiff must be a citizen of a different state from every defendant (citizenship = state of domicile for individuals; state of incorporation AND principal place of business for corporations).\n(2) Amount in controversy must exceed $75,000 (exclusive of interest and costs).\n\nNote: a party may not manufacture diversity by collusively joining or dropping parties." },
+  { id:27, subject:"Civil Procedure", sub:"Jurisdiction", q:"What is the Erie doctrine?", a:"In diversity cases, federal courts must apply state substantive law and federal procedural law. If a conflict exists between a state law and a Federal Rule of Civil Procedure, the FRCP controls as long as it does not violate the Rules Enabling Act (it must not abridge or modify substantive rights).\n\nKey test for 'substance vs. procedure': if the rule would significantly affect the outcome of the litigation (outcome-determinative test) or if applying federal law would cause forum shopping, apply state law." },
+  { id:28, subject:"Civil Procedure", sub:"Jurisdiction", q:"What are the requirements for venue in federal court?", a:"Venue is proper in: (1) any district where any defendant resides, if all defendants reside in the same state; OR (2) any district where a substantial part of the events or omissions giving rise to the claim occurred, or where a substantial part of the property that is the subject of the action is situated.\n\nFor diversity cases only: if neither (1) nor (2) applies, venue is proper in any district where any defendant is subject to personal jurisdiction." },
+  { id:29, subject:"Civil Procedure", sub:"Pleadings", q:"What are the defenses that must be raised in a pre-answer motion or they are waived?", a:"Under FRCP 12(h), the following defenses are waived if not raised in a pre-answer motion or in the answer (whichever is first):\n• Lack of personal jurisdiction;\n• Improper venue;\n• Insufficiency of process;\n• Insufficiency of service of process.\n\nSubject matter jurisdiction can be raised at ANY time. Failure to state a claim (12(b)(6)) and failure to join an indispensable party can be raised through trial." },
+  { id:30, subject:"Civil Procedure", sub:"Pleadings", q:"What is the standard for a 12(b)(6) motion to dismiss for failure to state a claim?", a:"The court must accept all well-pleaded factual allegations as true and draw all reasonable inferences in the plaintiff's favor. The complaint survives if it states a claim to relief that is PLAUSIBLE on its face (Twombly/Iqbal standard) — meaning it contains enough factual matter to permit a reasonable inference of the defendant's liability (not just a formulaic recitation of elements)." },
+  { id:31, subject:"Civil Procedure", sub:"Joinder", q:"What is the difference between compulsory joinder and permissive joinder of parties?", a:"Compulsory joinder (FRCP 19): a party must be joined if: (1) the court cannot accord complete relief without the absent party, OR (2) the absent party claims an interest and its absence would prejudice either it or the current parties. If joinder would destroy jurisdiction and the party is 'indispensable,' the court may dismiss.\n\nPermissive joinder (FRCP 20): multiple plaintiffs/defendants may join if: (1) the claims arise from the same transaction or occurrence, AND (2) there is a common question of law or fact." },
+  { id:32, subject:"Civil Procedure", sub:"Discovery", q:"What is the work-product doctrine and when can it be overcome?", a:"Work product (FRCP 26(b)(3)) protects materials prepared by or for a party or its representative in anticipation of litigation or for trial. It is NOT absolute — ordinary work product (factual) can be obtained by showing substantial need and inability to obtain the equivalent without undue hardship. Opinion work product (attorney's mental impressions, conclusions, opinions, legal theories) is nearly absolutely protected and can almost never be compelled." },
+  { id:33, subject:"Civil Procedure", sub:"Summary Judgment", q:"What is the standard for summary judgment under FRCP 56?", a:"Summary judgment is granted when there is no genuine dispute as to any material fact and the moving party is entitled to judgment as a matter of law. The court views the evidence in the light most favorable to the non-moving party. The moving party bears the initial burden; if met, the burden shifts to the non-moving party to produce specific facts showing a genuine issue for trial (cannot rest on mere allegations in the pleadings)." },
+  { id:34, subject:"Civil Procedure", sub:"Trial & Post-Trial", q:"What is a judgment as a matter of law (JMOL) and when may it be renewed (RJMOL)?", a:"JMOL (formerly directed verdict): granted during trial (after the opposing party has been heard) when a reasonable jury would not have a legally sufficient evidentiary basis to find for the non-moving party. The moving party must have moved for JMOL before the case went to the jury.\n\nRenewed JMOL (RJMOL / formerly JNOV): must be filed within 28 days after entry of judgment. Standard is the same — was there sufficient evidence for the jury's verdict? CANNOT be granted on a ground not raised in the pre-verdict JMOL." },
+  { id:35, subject:"Civil Procedure", sub:"Supplemental Jurisdiction", q:"What is supplemental jurisdiction and when is it discretionary?", a:"Supplemental jurisdiction (28 U.S.C. § 1367) allows federal courts to hear state claims that share a 'common nucleus of operative fact' with a claim over which the court has original jurisdiction.\n\nA court may DECLINE supplemental jurisdiction when: (1) the state claim raises a novel or complex issue of state law; (2) the state claim substantially predominates; (3) all federal claims have been dismissed; or (4) there are other compelling reasons.\n\nNote: in diversity cases, supplemental jurisdiction may not be used by plaintiffs to circumvent the complete diversity or amount-in-controversy requirements." },
+  { id:36, subject:"Civil Procedure", sub:"Class Actions", q:"What are the FRCP 23(a) prerequisites for a class action?", a:"Under FRCP 23(a), all four prerequisites must be met:\n(1) Numerosity — the class is so numerous that joinder of all members is impracticable;\n(2) Commonality — there are questions of law or fact common to the class;\n(3) Typicality — the representative parties' claims or defenses are typical of the class;\n(4) Adequacy — the representative parties will fairly and adequately protect the interests of the class.\n\nThe class must also satisfy one of the 23(b) categories (e.g., common questions predominate and class action is superior — 23(b)(3))." },
+
+  // ════════════════════════════════════════════════
+  // CONSTITUTIONAL LAW
+  // ════════════════════════════════════════════════
+  { id:37, subject:"Constitutional Law", sub:"Commerce Clause", q:"What can Congress regulate under the Commerce Clause, and what is the test for state regulation of commerce?", a:"Congress can regulate: (1) the channels of interstate commerce; (2) the instrumentalities of interstate commerce and persons or things in interstate commerce; (3) activities that substantially affect interstate commerce (aggregate effects of purely local activities count).\n\nDormant Commerce Clause — when states regulate in the absence of congressional regulation:\n• Discriminatory (facial or in purpose/effect): virtually per se invalid (apply strict scrutiny — must be necessary to achieve a compelling, non-discriminatory purpose).\n• Non-discriminatory burden: apply the Pike balancing test (burden on commerce must not outweigh the local benefit)." },
+  { id:38, subject:"Constitutional Law", sub:"Due Process", q:"What is the distinction between procedural due process and substantive due process?", a:"Procedural due process: government must provide fair procedures before depriving a person of life, liberty, or property. Analyze: (1) is there a protected liberty or property interest? (2) What process is due? (Mathews v. Eldridge: balance private interest, risk of erroneous deprivation, and government's interest.)\n\nSubstantive due process: government action must not be arbitrary or unreasonable regardless of procedures. Fundamental rights → strict scrutiny. Non-fundamental rights → rational basis." },
+  { id:39, subject:"Constitutional Law", sub:"Equal Protection", q:"What are the three levels of scrutiny under the Equal Protection Clause and when does each apply?", a:"1. Rational basis: law must be rationally related to a legitimate government interest. Applies to economic/social legislation, age, disability. Very deferential — law almost always upheld.\n\n2. Intermediate scrutiny: law must be substantially related to an important government interest. Applies to sex/gender and legitimacy classifications. Government bears the burden.\n\n3. Strict scrutiny: law must be necessary (narrowly tailored) to achieve a compelling government interest. Applies to race, national origin, religion, alienage (federal), and fundamental rights. Rarely upheld — government bears burden." },
+  { id:40, subject:"Constitutional Law", sub:"First Amendment", q:"What is the test for content-based restrictions on speech vs. content-neutral restrictions?", a:"Content-based (restricts speech based on its message or subject matter): subject to strict scrutiny — must be narrowly tailored to serve a compelling government interest.\n\nContent-neutral (restricts manner/time/place regardless of content): subject to intermediate scrutiny — must be narrowly tailored to serve a significant government interest and leave open alternative channels of communication.\n\nUnprotected speech (no First Amendment protection): obscenity, true threats, incitement to imminent lawless action (Brandenburg test), fighting words, defamation, and commercial fraud." },
+  { id:41, subject:"Constitutional Law", sub:"First Amendment", q:"What are the Establishment Clause and Free Exercise Clause tests?", a:"Establishment Clause: government cannot establish a religion. Modern test (Lemon/Kennedy): (1) does the law have a secular legislative purpose? (2) Does the principal/primary effect neither advance nor inhibit religion? (3) Does it avoid excessive government entanglement with religion? Recent trend toward 'historical practices and understandings' (Kennedy v. Bremerton).\n\nFree Exercise Clause: government cannot burden the free exercise of religion unless the law is (1) neutral (not targeting religion) AND (2) generally applicable. If it is NOT neutral and generally applicable → strict scrutiny." },
+  { id:42, subject:"Constitutional Law", sub:"Takings", q:"When is government action a 'taking' requiring just compensation?", a:"Physical takings: any permanent physical occupation/invasion of property = per se taking.\n\nRegulatory takings: government regulation that goes 'too far' may be a taking (Penn Central balancing: economic impact, interference with investment-backed expectations, character of the government action).\n\nPer se regulatory takings:\n• Total wipeout: regulation eliminates ALL economic value (Lucas).\n• Any permanent physical occupation (Loretto).\n\nJust compensation = fair market value (not the owner's subjective loss)." },
+  { id:43, subject:"Constitutional Law", sub:"Federalism", q:"What are the limits on Congress's power to commandeer state governments?", a:"Anti-commandeering doctrine: Congress CANNOT commandeer state governments by:\n(1) Directing state legislatures to enact laws (New York v. U.S.);\n(2) Compelling state executive officers to enforce federal law (Printz v. U.S.).\n\nCongress CAN:\n• Attach conditions to federal spending (must be unambiguous, related to the spending purpose, not coercive — NFIB v. Sebelius);\n• Regulate states through generally applicable laws;\n• Allow states to choose between federal regulation or their own equivalent." },
+  { id:44, subject:"Constitutional Law", sub:"Eleventh Amendment", q:"When may Congress abrogate state sovereign immunity?", a:"States have Eleventh Amendment immunity from suit in federal court. Congress can abrogate state immunity only if:\n(1) Congress unequivocally expresses its intent to abrogate, AND\n(2) Congress acts pursuant to a valid constitutional provision that grants the power to abrogate (Section 5 of the Fourteenth Amendment — valid; Commerce Clause alone — NOT sufficient after Seminole Tribe).\n\nStates may also waive immunity by voluntarily consenting to suit." },
+  { id:45, subject:"Constitutional Law", sub:"State Action", q:"What are the two main exceptions to the state action requirement under the 14th Amendment?", a:"Constitutional rights generally apply only to government action, not private conduct. Exceptions:\n\n(1) Public function doctrine: a private party performing a function traditionally and exclusively reserved to the government (e.g., company town, running elections for a political party) is subject to constitutional constraints.\n\n(2) Entanglement doctrine: government is so significantly involved in or entangled with private conduct (e.g., leasing premises, enforcing private discriminatory acts) that the private action becomes state action." },
+
+  // ════════════════════════════════════════════════
+  // CONTRACTS & SALES
+  // ════════════════════════════════════════════════
+  { id:46, subject:"Contracts & Sales", sub:"Formation", q:"What are the requirements for a valid offer?", a:"An offer must:\n(1) Be communicated to the offeree;\n(2) Manifest a present intent to be bound;\n(3) Be sufficiently definite and certain (identify the parties, subject matter, price, and quantity where applicable).\n\nUCC (Article 2 — goods): more flexible — courts may supply missing terms (e.g., reasonable price, reasonable time). However, quantity must be stated (output/requirements contracts exception).\n\nAdvertisements: generally NOT offers (invitations to deal), UNLESS they are specific and definite enough to appear as offers." },
+  { id:47, subject:"Contracts & Sales", sub:"Formation", q:"Under common law, what is the mirror image rule? How does the UCC differ?", a:"Common law mirror image rule: an acceptance that adds or changes any term is a rejection and counteroffer, not an acceptance. No contract is formed unless the original offeror accepts the counteroffer.\n\nUCC § 2-207 (Battle of the Forms): a definite and seasonable expression of acceptance operates as an acceptance EVEN if it states additional or different terms. The additional terms become part of the contract between merchants UNLESS: (1) the offer expressly limits acceptance to its own terms; (2) the additional terms materially alter the contract; or (3) the offeror objects within a reasonable time." },
+  { id:48, subject:"Contracts & Sales", sub:"Formation", q:"What is consideration and what are its two elements?", a:"Consideration requires:\n(1) A bargained-for exchange — each party gives something in exchange for the other's promise or performance;\n(2) Legal detriment — the promisee does something they are not legally obligated to do, or refrains from doing something they have a legal right to do.\n\nPast consideration is NOT valid (a promise to pay for a benefit already received is generally unenforceable).\nPre-existing duty rule: doing what you are already legally obligated to do is NOT consideration (exception: UCC allows modification without consideration if made in good faith)." },
+  { id:49, subject:"Contracts & Sales", sub:"Statute of Frauds", q:"What contracts are covered by the Statute of Frauds and what is required to satisfy it?", a:"Under common law SOF, a writing is required for:\n• Marriage — a promise made in consideration of marriage;\n• Year — contracts not performable within one year;\n• Land — contracts for the sale of land or an interest therein;\n• Executor — executor's promise to pay estate debts personally;\n• Goods — UCC SOF: contracts for goods of $500+ (must state quantity);\n• Surety — a promise to pay another's debt.\n\nSatisfied by a signed writing by the party to be charged containing essential terms. UCC: merchants' confirmation rule (merchant-to-merchant written confirmation binds both if no objection within 10 days)." },
+  { id:50, subject:"Contracts & Sales", sub:"Conditions", q:"What is a condition precedent vs. a condition subsequent, and what is the difference between express and constructive conditions?", a:"Condition precedent: an event that must occur before a party's duty to perform arises (non-occurrence excuses performance).\nCondition subsequent: an event whose occurrence discharges an existing duty.\n\nExpress condition: explicitly stated in the contract — must be strictly satisfied.\nConstructive/implied condition: implied by law to do justice — substantial performance is sufficient (applies primarily to building/construction contracts). A party who has materially breached cannot rely on substantial performance." },
+  { id:51, subject:"Contracts & Sales", sub:"Breach & Remedies", q:"What is the difference between a material breach and a minor breach in terms of contract rights?", a:"Material breach: the non-breaching party is discharged from all further performance obligations and may sue for damages immediately. Factors: extent of benefit received, adequacy of compensation, hardship to breacher, likelihood of cure, bad faith.\n\nMinor breach (substantial performance): the non-breaching party is NOT discharged from performance obligations but may offset damages for the deficiency. The party who substantially performed can recover the contract price minus damages for the breach." },
+  { id:52, subject:"Contracts & Sales", sub:"Breach & Remedies", q:"What is anticipatory repudiation and what are the non-breaching party's options?", a:"Anticipatory repudiation: an unequivocal statement or action by a party before performance is due that indicates the party will not perform. It must be clear and definite — a party who merely expresses doubt is NOT anticipatorily repudiating.\n\nThe non-breaching party may:\n(1) Treat the repudiation as a present breach and sue immediately;\n(2) Wait until the performance date and then sue (but must mitigate damages);\n(3) Urge the repudiating party to perform.\n\nUCC: a party may suspend its own performance and demand adequate assurance of performance." },
+  { id:53, subject:"Contracts & Sales", sub:"Breach & Remedies", q:"What are the main contract damage measures?", a:"Expectation damages (default): puts the non-breaching party in the position they would have been in had the contract been performed — lost profits + incidental damages - costs saved.\n\nReliance damages: reimburses for costs expended in reliance on the contract when expectation damages are too speculative.\n\nRestitution: prevents unjust enrichment — value of benefit conferred on the breaching party (available to both breaching and non-breaching parties in some circumstances).\n\nSpecific performance: available when damages are inadequate (e.g., unique goods, real property).\n\nDuty to mitigate: the non-breaching party must take reasonable steps to mitigate damages." },
+  { id:54, subject:"Contracts & Sales", sub:"Defenses", q:"What are the main contract defenses (excuse doctrines)?", a:"• Impossibility: performance has become objectively impossible due to an unforeseeable supervening event (e.g., subject matter destroyed, party's death for personal services contract).\n• Impracticability (UCC): performance is commercially impracticable due to unforeseeable contingencies.\n• Frustration of purpose: performance is still possible but the fundamental purpose of the contract has been destroyed by an unforeseeable event.\n• Misrepresentation: fraudulent or material misrepresentation of a fact that induces reliance.\n• Mutual/Unilateral mistake: mutual mistake of a material fact at the time of contracting → voidable. Unilateral mistake → generally not voidable unless the other party knew or should have known." },
+  { id:55, subject:"Contracts & Sales", sub:"Third Parties", q:"What is a third-party beneficiary and when can they enforce a contract?", a:"An intended beneficiary has rights under a contract made for their direct benefit and may enforce the contract once their rights vest. Rights vest when the beneficiary: (1) manifests assent, (2) materially changes position in reliance, or (3) brings suit.\n\nOnce vested, the original parties CANNOT modify or rescind the contract without the beneficiary's consent.\n\nCreditor beneficiary: third party to whom the promisee owes a duty.\nDonee beneficiary: third party who receives the benefit as a gift.\n\nIncidental beneficiary: benefits from the contract only incidentally — CANNOT enforce it." },
+  { id:56, subject:"Contracts & Sales", sub:"Third Parties", q:"What is the difference between assignment and delegation?", a:"Assignment: the transfer of a contractual right (the thing you're owed). Assignor transfers their right to an assignee; the obligor must perform for the assignee.\n• Almost all rights can be assigned; cannot assign if it would materially change the obligor's burden, or if the contract prohibits assignment.\n• Gratuitous assignments are generally revocable; assignments for value are irrevocable.\n\nDelegation: the transfer of a contractual duty (the thing you owe). Delegating party remains liable unless there is a novation (all parties agree to release the delegator).\n• Cannot delegate duties that require personal skill/judgment." },
+  { id:57, subject:"Contracts & Sales", sub:"UCC", q:"What are the risk of loss rules under UCC Article 2?", a:"With a breach: risk of loss shifts to the breaching party regardless of delivery or inspection.\n\nWithout a breach:\n• Shipment contract (FOB origin): risk passes to buyer when seller delivers goods to the carrier.\n• Destination contract (FOB destination): risk passes to buyer when goods tender at the destination.\n• No carrier: merchant seller — risk passes upon buyer's actual receipt. Non-merchant seller — risk passes upon tender of delivery." },
+
+  // ════════════════════════════════════════════════
+  // CRIMINAL LAW
+  // ════════════════════════════════════════════════
+  { id:58, subject:"Criminal Law", sub:"Elements", q:"What are the elements of actus reus and what types of conduct qualify?", a:"Actus reus = the guilty act — requires a voluntary act or (in some cases) a failure to act when there is a legal duty to do so.\n\nA voluntary act: a bodily movement that is willed/voluntary (reflex, sleep, hypnosis = NOT voluntary).\n\nOmission liability requires a legal duty, which can arise from: (1) statute; (2) contract; (3) special relationship (parent-child, spouse, etc.); (4) voluntary assumption of care; or (5) the defendant created the risk of harm." },
+  { id:59, subject:"Criminal Law", sub:"Elements", q:"What are the four mens rea levels under the MPC?", a:"(1) Purposely: the defendant's conscious object is to cause the result (highest level).\n(2) Knowingly: the defendant is aware that his conduct will practically certainly cause the result (virtual certainty).\n(3) Recklessly: the defendant consciously disregards a substantial and unjustifiable risk.\n(4) Negligently: the defendant is unaware of but should have been aware of a substantial and unjustifiable risk.\n\nCommon law: specific intent (intent to achieve a further goal), general intent (awareness of act), and strict liability (no mens rea required)." },
+  { id:60, subject:"Criminal Law", sub:"Homicide", q:"What distinguishes first-degree murder, second-degree murder, and voluntary manslaughter?", a:"First-degree murder: premeditated and deliberate killing (actual reflection, however brief, + intent to kill).\n\nSecond-degree murder: all other intentional killings — includes depraved heart murder (extreme recklessness showing a disregard for human life) and felony murder for non-first-degree felonies.\n\nFelony murder: any killing caused during commission of an inherently dangerous felony (BARRK: Burglary, Arson, Robbery, Rape, Kidnapping) is first-degree murder.\n\nVoluntary manslaughter: intentional killing committed in the heat of passion upon adequate provocation (no cooling off period; must be provocation that would arouse a reasonable person)." },
+  { id:61, subject:"Criminal Law", sub:"Homicide", q:"What is involuntary manslaughter?", a:"Involuntary manslaughter: an unintentional killing resulting from:\n(1) Criminal negligence (gross negligence — a greater deviation from the reasonable person standard than civil negligence); OR\n(2) A misdemeanor (or non-BARRK felony) that causes death (misdemeanor-manslaughter rule).\n\nMPC: killing with recklessness = reckless manslaughter (similar to common law involuntary manslaughter)." },
+  { id:62, subject:"Criminal Law", sub:"Theft Crimes", q:"What are the elements of common law larceny, and how does it differ from robbery and embezzlement?", a:"Larceny: (1) trespassory (2) taking and (3) carrying away (4) of the personal property (5) of another (6) with intent to permanently deprive.\n\nRobbery = larceny + taking from the person or presence of the victim + by force or intimidation (threat of immediate bodily harm).\n\nEmbezzlement: fraudulent conversion of another's property by one who has lawful possession of it (e.g., an employee). No trespassory taking because possession was lawfully acquired — this fills the gap left by larceny." },
+  { id:63, subject:"Criminal Law", sub:"Theft Crimes", q:"What are the elements of burglary (common law vs. modern)?", a:"Common law burglary: (1) breaking (2) and entering (3) a dwelling (4) of another (5) at nighttime (6) with intent to commit a felony inside.\n\nModern statutes: typically eliminate the nighttime requirement, extend beyond dwellings (any building), and include intent to commit any crime (not just felony).\n\nNote: the intent to commit the felony must exist AT THE TIME of the breaking and entering — subsequent intent is insufficient." },
+  { id:64, subject:"Criminal Law", sub:"Inchoate", q:"What are the elements of conspiracy and what is the Wharton rule?", a:"Conspiracy: (1) an agreement between two or more persons (2) to commit a crime, plus (3) an overt act in furtherance (required in most jurisdictions, not at common law).\n\nUnilateral conspiracy (MPC): a person can be guilty of conspiracy even if the co-conspirator is acquitted, undercover, or feigns agreement.\n\nWharton rule: when the target offense by definition requires the participation of two parties (e.g., dueling, bigamy, incest), a conspiracy charge requires a third party.\n\nPinkerton liability: co-conspirators are liable for all foreseeable crimes committed by other co-conspirators in furtherance of the conspiracy." },
+  { id:65, subject:"Criminal Law", sub:"Defenses", q:"What are the elements of self-defense and when does the duty to retreat apply?", a:"Self-defense (non-deadly force): a person may use non-deadly force to defend against the threat of unlawful force.\n\nSelf-defense (deadly force): may use deadly force if: (1) they reasonably believe they are threatened with imminent death or serious bodily harm, AND (2) they are not the initial aggressor (or have withdrawn and communicated withdrawal).\n\nDuty to retreat: majority rule — no duty to retreat before using deadly force; castle doctrine — no duty to retreat in your home. Minority/MPC — duty to retreat if you can do so safely (except in your home).\n\nImperfect self-defense: unreasonable belief in the need for deadly force may reduce murder to manslaughter in some jurisdictions." },
+  { id:66, subject:"Criminal Law", sub:"Defenses", q:"What are the tests for the insanity defense?", a:"M'Naghten (majority): the defendant did not know: (1) the nature and quality of the act, OR (2) that the act was wrong (i.e., they did not know right from wrong).\n\nIrresistible Impulse: adds to M'Naghten — defendant knew the act was wrong but could not control their conduct.\n\nMPC/ALI: the defendant, as a result of a mental disease or defect, lacked substantial capacity to: (1) appreciate the criminality of the conduct, OR (2) conform conduct to the requirements of law.\n\nDurham (product) test: rarely used — the act was a product of mental disease or defect." },
+
+  // ════════════════════════════════════════════════
+  // CRIMINAL PROCEDURE
+  // ════════════════════════════════════════════════
+  { id:67, subject:"Criminal Procedure", sub:"4th Amendment", q:"What is required for a search warrant to be valid, and what are the main exceptions to the warrant requirement?", a:"Valid warrant requires: (1) probable cause; (2) particularity (describes the place to be searched and items/persons to be seized); (3) issued by a neutral, detached magistrate.\n\nWarrantless search exceptions:\n• Search incident to arrest (SITA): person + wingspan area;\n• Automobile exception: probable cause to believe contraband/evidence;\n• Plain view: officer lawfully present, item in plain view, incriminating nature immediately apparent;\n• Exigent circumstances: hot pursuit, prevent destruction of evidence, emergency;\n• Consent: freely and voluntarily given;\n• Terry stop: reasonable articulable suspicion of criminal activity." },
+  { id:68, subject:"Criminal Procedure", sub:"4th Amendment", q:"What is the exclusionary rule and what are its exceptions?", a:"Exclusionary rule: evidence obtained through an unconstitutional search/seizure (4th, 5th, or 6th Amendment violation) is inadmissible at trial. Also excludes 'fruit of the poisonous tree' (evidence derived from the illegal search).\n\nExceptions to exclusion:\n• Independent source: evidence was obtained from a separate, untainted source;\n• Inevitable discovery: police would have inevitably discovered the evidence through lawful means;\n• Attenuation: the connection between the violation and the evidence has become sufficiently attenuated;\n• Good faith: officers reasonably relied on a facially valid warrant later found to be defective (Leon);\n• Live witness testimony: standing limitation — defendant must have had reasonable expectation of privacy in the area searched." },
+  { id:69, subject:"Criminal Procedure", sub:"5th Amendment", q:"What are the Miranda requirements, when do they apply, and what are the consequences of a violation?", a:"Miranda applies to: custodial interrogation by law enforcement.\n\nRequired warnings: (1) right to remain silent; (2) anything said can be used against you; (3) right to an attorney; (4) if you cannot afford an attorney, one will be appointed.\n\nInvocation: unambiguous invocation of right to remain silent → police must cease interrogation. Invocation of right to counsel → police must cease ALL questioning until counsel is present.\n\nConsequence of violation: statements obtained in violation of Miranda are inadmissible in the prosecution's case-in-chief (may be used for impeachment purposes). Failure to give Miranda warnings does NOT make the physical fruits of a statement inadmissible." },
+  { id:70, subject:"Criminal Procedure", sub:"6th Amendment", q:"What is the Sixth Amendment right to counsel and when does it attach?", a:"The Sixth Amendment right to counsel attaches at the initiation of formal judicial proceedings (indictment, information, arraignment, or preliminary hearing at which charges are filed). It is offense-specific — applies only to charged offenses.\n\nOnce attached: any deliberate elicitation of information about the charged offense by government agents (even without interrogation) violates the right to counsel if counsel is not present.\n\nIneffective assistance of counsel (Strickland): defendant must show (1) counsel's performance was deficient (fell below an objective standard of reasonableness), AND (2) there was prejudice (reasonable probability the outcome would have differed with competent counsel)." },
+  { id:71, subject:"Criminal Procedure", sub:"Due Process", q:"What due process rights apply to identification procedures (lineups, show-ups)?", a:"Due process requires suppression of an eyewitness identification if: (1) the identification procedure was unnecessarily suggestive, AND (2) the identification was unreliable under the totality of the circumstances.\n\nFactors for reliability: the witness's opportunity to view, degree of attention paid, accuracy of the prior description, level of certainty, and time between crime and identification.\n\nNote: the right to counsel attaches to post-indictment lineups (Sixth Amendment) but NOT to photo arrays or pre-charge lineups." },
+
+  // ════════════════════════════════════════════════
+  // EVIDENCE
+  // ════════════════════════════════════════════════
+  { id:72, subject:"Evidence", sub:"Relevance", q:"What is the FRE 403 balancing test, and what are examples of character evidence rules?", a:"FRE 403: relevant evidence may be excluded if its probative value is substantially outweighed by the danger of unfair prejudice, confusion of the issues, or misleading the jury.\n\nCharacter evidence (FRE 404):\n• Civil cases: character evidence is generally inadmissible to prove that a person acted in conformity therewith.\n• Criminal cases: defendant may introduce evidence of a pertinent character trait (opening the door for the prosecution); prosecution may then rebut.\n• Methods: in a criminal case, character witnesses may testify to reputation or opinion (not specific acts); on cross, they may be asked about specific acts (have you heard / did you know).\n• Exceptions: MIMIC (Motive, Intent, Mistake/absence of, Identity, Common plan/scheme) — specific act evidence may be admissible to prove non-character purposes." },
+  { id:73, subject:"Evidence", sub:"Hearsay", q:"What is hearsay and what are the key non-hearsay uses of out-of-court statements?", a:"Hearsay (FRE 801): an out-of-court statement offered to prove the truth of the matter asserted. If not offered for its truth, it is NOT hearsay.\n\nNon-hearsay uses:\n• Verbal acts (legally operative words, e.g., words of a contract, defamatory words);\n• Effect on listener (e.g., notice, knowledge, motive);\n• Circumstantial evidence of state of mind;\n• Prior inconsistent statements used for impeachment only (not substantive).\n\nExemptions from hearsay (FRE 801(d) — treated as non-hearsay):\n• Prior inconsistent statement given under oath at a prior proceeding;\n• Prior consistent statement (to rebut a charge of recent fabrication);\n• Statement by a party opponent (admission by a party opponent)." },
+  { id:74, subject:"Evidence", sub:"Hearsay Exceptions", q:"What are the hearsay exceptions that do NOT require the declarant to be unavailable (FRE 803)?", a:"Key FRE 803 exceptions (declarant availability irrelevant):\n• Present sense impression: statement describing an event made during or immediately after perceiving it;\n• Excited utterance: statement relating to a startling event, made while declarant was under the stress of excitement;\n• Then-existing mental/emotional/physical condition: statement of declarant's then-existing state of mind (intent, plan, motive) or physical condition — NOT statements about memory of past events;\n• Statement for medical diagnosis or treatment: made to obtain medical care and reasonably pertinent thereto;\n• Business records: record of regularly conducted activity, kept in the ordinary course of business, made at or near the time by a person with knowledge, and authenticated by a qualified witness (or by certification);\n• Public records: records of government activities, observations by government officials (with duty to report), or factual findings from a legal investigation." },
+  { id:75, subject:"Evidence", sub:"Hearsay Exceptions", q:"What hearsay exceptions require the declarant to be unavailable (FRE 804), and what is unavailability?", a:"Unavailability (FRE 804(a)): the declarant is privileged from testifying, refuses to testify despite court order, lacks memory, is dead or physically/mentally infirm, or is absent and proponent cannot procure attendance by process.\n\nFRE 804 exceptions:\n• Former testimony: testimony given under oath in a prior proceeding in which the opposing party had an opportunity and similar motive to examine the declarant;\n• Dying declaration: statement by one who believed death was imminent about the cause or circumstances of what the declarant believed was their impending death (homicide cases or civil cases);\n• Statement against interest: a statement that a reasonable person would not have made unless they believed it to be true because it was against their pecuniary, proprietary, or penal interest;\n• Statement of personal or family history." },
+  { id:76, subject:"Evidence", sub:"Confrontation Clause", q:"How does the Confrontation Clause (Crawford) limit hearsay in criminal cases?", a:"Crawford v. Washington: the Confrontation Clause bars the admission of testimonial hearsay against a criminal defendant UNLESS: (1) the declarant is unavailable, AND (2) the defendant had a prior opportunity to cross-examine.\n\nTestimonial statements: statements made in a formal setting to government officers primarily to be used in a later prosecution (e.g., formal police interrogations, 911 calls after the emergency is over, lab reports used at trial (Melendez-Diaz)).\n\nNon-testimonial statements: statements made for purposes other than prosecution (e.g., 911 calls during an ongoing emergency (Davis), excited utterances) — governed only by hearsay rules, NOT the Confrontation Clause.\n\nNote: an accused's own statements against him are not barred by Crawford (party admission exception is defendant's right to waive)." },
+  { id:77, subject:"Evidence", sub:"Privileges", q:"What are the key evidentiary privileges tested on the MEE?", a:"Attorney-client privilege: protects confidential communications between attorney and client made for the purpose of legal advice. Belongs to the client (who can waive it). Does NOT protect underlying facts, identity of the client, or communications made in furtherance of a crime or fraud.\n\nSpousal privileges:\n• Adverse spousal testimony (criminal): a spouse cannot be compelled to testify against the other spouse in a criminal case (in federal courts, the witness spouse holds the privilege and may waive it).\n• Marital communications: confidential communications between spouses during a valid marriage are privileged (both spouses hold it; survives divorce).\n\nPhysician-patient: not recognized under FRE but common in state courts." },
+  { id:78, subject:"Evidence", sub:"Witnesses", q:"What are the rules on impeachment of witnesses?", a:"Methods of impeachment:\n(1) Prior inconsistent statement: admissible for impeachment; only substantive if made under oath at a prior proceeding;\n(2) Bias, interest, or motive;\n(3) Conviction of a crime: crimes involving dishonesty (FRE 609(a)(2)) — always admissible. Felonies (FRE 609(a)(1)) — admissible if probative value outweighs prejudicial effect (defendant) or probative value outweighs prejudice (other witnesses), subject to 10-year time limit;\n(4) Reputation/opinion for untruthfulness (FRE 608(a));\n(5) Specific instances of conduct showing untruthfulness — only on cross (no extrinsic evidence);\n(6) Sensory/mental capacity." },
+
+  // ════════════════════════════════════════════════
+  // REAL PROPERTY
+  // ════════════════════════════════════════════════
+  { id:79, subject:"Real Property", sub:"Future Interests", q:"What are the six future interests in property?", a:"In grantor:\n(1) Possibility of reverter: follows a fee simple determinable (automatically reverts if condition violated);\n(2) Right of entry (power of termination): follows a fee simple subject to a condition subsequent (grantor must ACT to reclaim);\n(3) Reversion: grantor transfers a lesser estate than they own.\n\nIn third parties:\n(4) Remainder: follows a fee simple determinable or life estate that will definitely expire. Can be vested (ascertained holder, no condition precedent) or contingent (unascertained holder or condition precedent);\n(5) Executory interest: shifts to a third party upon a condition — shifting (cuts short another grantee) or springing (cuts short the grantor)." },
+  { id:80, subject:"Real Property", sub:"Concurrent Ownership", q:"What are the three forms of co-ownership and how are they distinguished?", a:"(1) Tenancy in common: two or more persons who each have an undivided interest. No right of survivorship. Interests can be devised or transferred without consent of co-tenants. Default form of co-ownership.\n\n(2) Joint tenancy: right of survivorship — upon death of one joint tenant, their interest passes automatically to the surviving joint tenants. Requires four unities: Time, Title, Interest, and Possession (TTIP). Severed by inter vivos transfer (creates a tenancy in common as to the transferee's share).\n\n(3) Tenancy by the entirety: only between married spouses; right of survivorship; neither spouse can alienate or encumber without the other's consent. Severed only by divorce, death, or mutual consent." },
+  { id:81, subject:"Real Property", sub:"Landlord-Tenant", q:"What are the landlord's implied warranty of habitability and the tenant's remedies?", a:"Implied warranty of habitability (residential leases): the landlord must maintain the premises in livable condition — safe, clean, fit for human habitation (e.g., working heat, plumbing, no vermin). Cannot be waived.\n\nTenant remedies for breach:\n(1) Terminate the lease;\n(2) Repair and deduct (where allowed);\n(3) Remain, pay reduced rent (rent abatement), and sue for damages;\n(4) Constructive eviction: if the landlord's action/inaction makes the premises substantially uninhabitable, the tenant may vacate and treat the lease as terminated (tenant must vacate within a reasonable time after notice to the landlord)." },
+  { id:82, subject:"Real Property", sub:"Easements", q:"How are easements created and extinguished?", a:"Creation: express grant or reservation (must satisfy SOF); implication (prior use or necessity); prescription (like adverse possession — open, notorious, continuous, hostile use for the statutory period; does NOT require exclusivity).\n\nAppurtenant easement: benefits a specific parcel (dominant estate) — runs with the land.\nEasement in gross: benefits a person rather than land (does not run with land absent assignment).\n\nExtinguishment: merger (both estates come under one owner); release (in writing); abandonment (physical act of abandonment, not mere non-use); prescription (adverse use blocks the easement for the statutory period); estoppel; necessity extinguishes when the necessity ends." },
+  { id:83, subject:"Real Property", sub:"Recording Acts", q:"What are the three types of recording acts and how do they work?", a:"(1) Race statute: first to record wins, regardless of notice. Rare.\n\n(2) Notice statute: a subsequent bona fide purchaser (BFP) who takes WITHOUT notice of a prior unrecorded interest prevails, even if they haven't recorded yet. A BFP must: (a) pay valuable consideration, and (b) take without actual, constructive (record), or inquiry notice.\n\n(3) Race-notice statute (most common): a subsequent BFP prevails only if they (a) take without notice AND (b) record BEFORE the prior purchaser.\n\nBFP for value: a person who pays valuable consideration (donees and heirs do NOT qualify as BFPs; they take subject to prior interests)." },
+  { id:84, subject:"Real Property", sub:"Adverse Possession", q:"What are the elements of adverse possession?", a:"OCEAN: Open, Continuous, Exclusive, Actual, Notorious (and hostile/adverse).\n\n(1) Actual possession (physical use consistent with the type of land);\n(2) Open and notorious (visible — the true owner would notice);\n(3) Exclusive (not sharing with the true owner or the general public);\n(4) Continuous (uninterrupted for the statutory period; tacking of successive possessors is allowed if privity exists);\n(5) Hostile/adverse (without the owner's permission; the possessor claims the land as their own — majority: objective test, does not require bad faith).\n\nColor of title: a defective written instrument may help establish the claim's scope." },
+  { id:85, subject:"Real Property", sub:"Mortgages", q:"What is the difference between judicial foreclosure and nonjudicial (power of sale) foreclosure, and what are a mortgagor's redemption rights?", a:"Judicial foreclosure: lender sues in court; requires court oversight; longer process. Common in 'lien theory' states.\n\nNonjudicial (power of sale) foreclosure: allowed in states with 'deed of trust' or 'power of sale' mortgage — trustee can foreclose without court action upon default. Common in 'title theory' states.\n\nEquitable right of redemption: the mortgagor may redeem (pay off the debt) at any time BEFORE foreclosure sale. This right can be waived only through proper foreclosure.\n\nStatutory right of redemption (some states): allows mortgagor to redeem AFTER the foreclosure sale (typically within 6 months to 1 year) by paying the foreclosure sale price." },
+  { id:86, subject:"Real Property", sub:"Covenants", q:"What are the requirements for a real covenant to run with the land vs. an equitable servitude?", a:"Real covenant (legal remedy — damages): for the burden to run: (1) the original parties intended for it to run; (2) it touches and concerns the land; (3) horizontal privity (original parties in a grantor-grantee relationship); AND (4) vertical privity (successor has the same estate as predecessor).\n\nEquitable servitude (equitable remedy — injunction): for the burden to run: (1) intent; (2) touches and concerns; (3) notice (actual, constructive/record, or inquiry notice). No horizontal or vertical privity required.\n\nImplied reciprocal servitude: if a developer sells lots with a restriction (e.g., residential only), an implied servitude may bind all lots in the common scheme, even if not in all deeds." },
+
+  // ════════════════════════════════════════════════
+  // TORTS
+  // ════════════════════════════════════════════════
+  { id:87, subject:"Torts", sub:"Intentional Torts", q:"What are the elements of battery and assault?", a:"Battery: (1) an act by the defendant; (2) intent to cause harmful or offensive contact (transferred intent applies); (3) harmful or offensive contact with the plaintiff's person. Contact is 'offensive' if it would offend a person of ordinary sensibilities.\n\nAssault: (1) an act by the defendant; (2) intent to cause apprehension of imminent harmful or offensive contact; (3) plaintiff has a reasonable apprehension of such contact. Words alone are usually insufficient; words + act may suffice. The defendant must have the apparent ability to carry out the threat." },
+  { id:88, subject:"Torts", sub:"Intentional Torts", q:"What are the elements of intentional infliction of emotional distress (IIED)?", a:"IIED requires:\n(1) Defendant's conduct was extreme and outrageous (beyond all possible bounds of decency, atrocious, and utterly intolerable in a civilized society);\n(2) Defendant acted intentionally or recklessly;\n(3) Causation;\n(4) Plaintiff suffered severe emotional distress.\n\nMere insults, threats, or annoyances are NOT enough. Courts are more likely to find outrageous conduct when: the defendant is in a position of authority over the plaintiff, or the plaintiff is a member of a vulnerable group (e.g., a child, pregnant woman) and the defendant knew of the vulnerability." },
+  { id:89, subject:"Torts", sub:"Negligence", q:"What are the four elements of negligence?", a:"(1) Duty: the defendant owed a duty of reasonable care to the plaintiff. General rule: everyone owes a duty to exercise the care of a reasonable prudent person to all foreseeable plaintiffs (Palsgraf/Cardozo majority).\n\n(2) Breach: defendant failed to act as a reasonable prudent person would under the circumstances (objective standard). Res ipsa loquitur: plaintiff may use RIL when (a) the accident would not normally occur without negligence, (b) the defendant had exclusive control of the instrumentality, and (c) the plaintiff did not contribute to the harm.\n\n(3) Causation: actual causation (but-for cause) and proximate causation (no superseding/intervening cause that breaks the chain).\n\n(4) Damages: plaintiff suffered actual harm (unlike intentional torts, pure economic loss generally not recoverable alone)." },
+  { id:90, subject:"Torts", sub:"Negligence", q:"What duties of care does a land possessor owe to trespassers, licensees, and invitees?", a:"Trespasser: no duty except to avoid willful/wanton injury. Exception — discovered/anticipated trespasser: duty of reasonable care for known dangers (artificial conditions). Attractive nuisance doctrine: for child trespassers, duty of reasonable care if (1) artificial condition, (2) owner knew/should have known children might trespass, (3) children don't appreciate the risk, (4) maintaining condition is unreasonable vs. risk.\n\nLicensee (social guest, permission to enter for own purpose): duty to warn of known dangers not reasonably discoverable by the licensee (no duty to inspect).\n\nInvitee (public or business invitee): highest duty — must inspect for and repair hidden dangers, or warn of dangers that the invitee would not reasonably discover." },
+  { id:91, subject:"Torts", sub:"Negligence", q:"What is the distinction between contributory negligence, comparative fault, and assumption of the risk?", a:"Contributory negligence (minority): plaintiff's own negligence that contributes to their harm is a complete bar to recovery.\n\nComparative fault (majority):\n• Pure comparative fault: plaintiff can recover even if 99% at fault (recovery reduced by plaintiff's % fault).\n• Modified comparative fault: plaintiff can recover only if their fault is LESS than (or ≤) the defendant's fault; if plaintiff is 50%+ at fault, they recover nothing.\n\nAssumption of the risk: plaintiff KNEW of the risk and VOLUNTARILY encountered it. Express assumption (written waiver) typically bars recovery. Implied assumption of risk is often merged into comparative fault analysis in most jurisdictions." },
+  { id:92, subject:"Torts", sub:"Strict Liability", q:"When does strict liability apply for abnormally dangerous activities and for animals?", a:"Abnormally dangerous activities: strict liability applies when: (1) the activity creates a foreseeable risk of serious harm even with due care; (2) the activity is not common usage in the community; and (3) the risk cannot be eliminated by reasonable care. Examples: blasting, storing explosives, fumigation with toxic chemicals.\n\nAnimals:\n• Wild animals: owner is strictly liable for harm caused by a wild animal's dangerous propensity (even if the specific animal never showed aggression).\n• Domestic animals: strict liability only if the owner knew or had reason to know of the animal's dangerous propensity (the 'one bite' rule for dogs in traditional jurisdictions — but many states have now enacted strict liability statutes)." },
+  { id:93, subject:"Torts", sub:"Products Liability", q:"What are the theories of recovery in a products liability case?", a:"(1) Negligence: manufacturer/seller failed to exercise reasonable care in design, manufacturing, or warnings.\n\n(2) Strict products liability (Restatement § 402A): a commercial seller/manufacturer is strictly liable if they sell a product in a defective condition unreasonably dangerous to the user. Plaintiff must show: (a) the product was sold by a commercial seller; (b) the product was defective; and (c) the defect caused the plaintiff's injury.\n\nTypes of defects:\n• Manufacturing defect: product deviated from the intended design;\n• Design defect: the entire product line is defective (consumer expectations test or risk-utility balancing test);\n• Warning defect: failure to adequately warn of a non-obvious risk.\n\n(3) Warranty: breach of express warranty, implied warranty of merchantability, or implied warranty of fitness for a particular purpose." },
+  { id:94, subject:"Torts", sub:"Defamation", q:"What are the elements of defamation and how does the First Amendment limit defamation claims?", a:"Defamation requires: (1) a defamatory statement of fact (not opinion); (2) of or concerning the plaintiff (identification); (3) publication to a third party; (4) damages (libel = written, presumed; slander = spoken, must prove special damages unless slander per se).\n\nConstitutional limits:\n• Public figure or public official: must prove actual malice (knowledge of falsity or reckless disregard for the truth) — cannot rely on strict liability.\n• Private figure / matter of public concern: negligence standard (Gertz).\n• Private figure / private concern: states may impose strict liability.\n\nSlander per se (no special damages): statements imputing (1) criminal conduct, (2) loathsome disease, (3) misconduct in the plaintiff's business/profession, or (4) sexual immorality." },
+  { id:95, subject:"Torts", sub:"Defamation", q:"What is the difference between private nuisance and public nuisance?", a:"Private nuisance: a substantial and unreasonable interference with a private individual's use and enjoyment of their land. Does NOT require physical invasion. Balances the utility of the defendant's conduct against the harm to the plaintiff.\n\nPublic nuisance: an unreasonable interference with a right common to the general public (e.g., pollution, blocking a public road). A private plaintiff can sue for public nuisance only if they suffered special harm different in kind from the harm suffered by the general public." },
+
+  // ════════════════════════════════════════════════
+  // BONUS CROSSOVER & HIGH-YIELD CARDS
+  // ════════════════════════════════════════════════
+  { id:96, subject:"Agency & Partnership", sub:"High Yield", q:"What is the undisclosed principal rule and how does it interact with apparent authority?", a:"When the principal's existence is not disclosed to the third party, the agent is personally liable on the contract as if the agent were the principal. The undisclosed principal may be held liable under inherent agency power (NOT apparent authority — apparent authority requires the principal's conduct toward the third party, which is impossible with an undisclosed principal).\n\nIf the principal's existence is partially disclosed (agent acts for 'an unnamed principal'), the agent is still personally liable, but the third party can sue either the agent or the principal once the principal's identity is revealed." },
+  { id:97, subject:"Contracts & Sales", sub:"High Yield", q:"What is promissory estoppel and when does it apply?", a:"Promissory estoppel (reliance): enforces an otherwise unenforceable promise (e.g., lacking consideration) when:\n(1) The promisor made a clear and definite promise;\n(2) The promisor expected or should have expected the promisee to rely;\n(3) The promisee actually and reasonably relied on the promise; AND\n(4) Injustice can only be avoided by enforcing the promise.\n\nRelief: courts may limit recovery to the reliance interest (out-of-pocket costs) rather than the full expectation interest." },
+  { id:98, subject:"Evidence", sub:"High Yield", q:"What is the best evidence rule (original writing rule)?", a:"FRE 1002: to prove the content of a writing, recording, or photograph, the original must be produced (or an adequate duplicate).\n\nApplies only when the content of the document is DIRECTLY at issue — does NOT apply when a witness merely refers to facts that happen to be in a document.\n\nExceptions: original is lost/destroyed (not by bad faith), original cannot be obtained, opponent has the original and fails to produce it, or the document is not closely related to a controlling issue.\n\nDuplicates (FRE 1003): generally admissible to the same extent as an original unless genuine authenticity question or fairness concern." },
+  { id:99, subject:"Constitutional Law", sub:"High Yield", q:"What is the test for content-neutral time, place, and manner restrictions on speech in public forums?", a:"For a public forum (parks, streets, traditional public forums), content-neutral regulations are valid if:\n(1) The restriction is content-neutral (justified without reference to content);\n(2) It is narrowly tailored to serve a significant government interest (need not be the least restrictive means — only that the regulation does not burden substantially more speech than necessary);\n(3) It leaves open adequate alternative channels of communication.\n\nTraditional public forums: streets, parks, sidewalks — government has heaviest burden.\nDesignated public forums: government can limit use to certain groups/topics, but regulations within that designation must still meet TPM standards.\nNon-public forums: government has broad discretion but cannot discriminate based on viewpoint." },
+  { id:100, subject:"Real Property", sub:"High Yield", q:"What are the requirements for a valid deed and what is the delivery requirement?", a:"A valid deed must:\n(1) Be in writing;\n(2) Identify the grantor and grantee;\n(3) Contain a description of the property (legal description — metes and bounds, or plat reference);\n(4) Contain words of conveyance (grant/bargain/sell);\n(5) Be signed by the grantor.\n\nDelivery: title passes when the grantor INTENDS to transfer title immediately and irrevocably — does NOT require physical delivery or the grantee's acceptance (but acceptance is presumed for beneficial conveyances and grantee has right to reject).\n\nRecordation is NOT required for delivery — but protects against subsequent purchasers under recording acts." },
+];
+
+// ── API KEY ──
+function getApiKey() { return localStorage.getItem('anthropic_api_key') || ''; }
+
+function updateApiKeyBtn() {
+  const key = getApiKey();
+  const btn = document.getElementById('api-key-btn');
+  const label = document.getElementById('api-key-label');
+  if (key) {
+    btn.classList.add('set');
+    label.textContent = 'API Key Set';
+    document.getElementById('api-key-icon').textContent = '✓';
+  } else {
+    btn.classList.remove('set');
+    label.textContent = 'Add API Key';
+    document.getElementById('api-key-icon').textContent = '🔑';
+  }
+  updateCompareHint();
+}
+
+function updateCompareHint() {
+  const hint = document.getElementById('compare-hint');
+  if (!hint) return;
+  hint.textContent = getApiKey() ? 'AI grading enabled · Cmd+Enter' : 'No API key — side-by-side only · Cmd+Enter';
+}
+
+function openApiModal() {
+  document.getElementById('api-key-input').value = getApiKey();
+  document.getElementById('api-key-modal').classList.add('open');
+  setTimeout(() => document.getElementById('api-key-input').focus(), 50);
+}
+
+function closeApiModal() { document.getElementById('api-key-modal').classList.remove('open'); }
+
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (val) localStorage.setItem('anthropic_api_key', val);
+  closeApiModal();
+  updateApiKeyBtn();
+}
+
+function clearApiKey() {
+  localStorage.removeItem('anthropic_api_key');
+  document.getElementById('api-key-input').value = '';
+  closeApiModal();
+  updateApiKeyBtn();
+}
+
+document.getElementById('api-key-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('api-key-modal')) closeApiModal();
+});
+
+document.getElementById('api-key-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveApiKey();
+  if (e.key === 'Escape') closeApiModal();
+});
+
+// ── STATE ──
+let filteredCards = [];
+let deck = [];
+let deckIndex = 0;
+let correct = 0;
+let wrong = 0;
+let wrongCards = [];
+let isFlipped = false;
+let activeSubjects = new Set();
+let sessionDeck = [];
+let quizMode = 'flip'; // 'flip' | 'write'
+
+function setMode(mode) {
+  quizMode = mode;
+  document.getElementById('mode-flip').classList.toggle('active', mode === 'flip');
+  document.getElementById('mode-write').classList.toggle('active', mode === 'write');
+}
+
+const subjects = [...new Set(CARDS.map(c => c.subject))];
+
+// ── INIT ──
+function init() {
+  buildFilterBar();
+  buildSubjectGrid();
+  updateStats();
+  updateApiKeyBtn();
+}
+
+function buildFilterBar() {
+  const bar = document.getElementById('filter-bar');
+  bar.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'filter-btn active';
+  allBtn.textContent = 'All Subjects';
+  allBtn.dataset.subject = 'all';
+  allBtn.onclick = () => toggleFilter('all', allBtn);
+  bar.appendChild(allBtn);
+
+  subjects.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.textContent = s;
+    btn.dataset.subject = s;
+    btn.onclick = () => toggleFilter(s, btn);
+    bar.appendChild(btn);
+  });
+}
+
+function toggleFilter(subject, btn) {
+  const allBtn = document.querySelector('[data-subject="all"]');
+  if (subject === 'all') {
+    activeSubjects.clear();
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  } else {
+    allBtn.classList.remove('active');
+    if (activeSubjects.has(subject)) {
+      activeSubjects.delete(subject);
+      btn.classList.remove('active');
+      if (activeSubjects.size === 0) {
+        allBtn.classList.add('active');
+      }
+    } else {
+      activeSubjects.add(subject);
+      btn.classList.add('active');
+    }
+  }
+  updateStats();
+  buildSubjectGrid();
+}
+
+function getFilteredCards() {
+  if (activeSubjects.size === 0) return CARDS;
+  return CARDS.filter(c => activeSubjects.has(c.subject));
+}
+
+function updateStats() {
+  const filtered = getFilteredCards();
+  document.getElementById('stat-total').textContent = CARDS.length;
+  document.getElementById('stat-subjects').textContent = subjects.length;
+  document.getElementById('stat-filtered').textContent = filtered.length;
+}
+
+function buildSubjectGrid() {
+  const grid = document.getElementById('subject-grid');
+  grid.innerHTML = '';
+  const subjectCounts = {};
+  CARDS.forEach(c => { subjectCounts[c.subject] = (subjectCounts[c.subject] || 0) + 1; });
+  subjects.forEach(s => {
+    const cnt = subjectCounts[s] || 0;
+    const isActive = activeSubjects.size === 0 || activeSubjects.has(s);
+    const card = document.createElement('div');
+    card.className = 'subject-card';
+    card.style.opacity = isActive ? '1' : '0.45';
+    card.innerHTML = `<div class="sname">${s}</div><div class="scount">${cnt} cards</div><div class="sbar"><div class="sbar-fill" style="width:${(cnt/CARDS.length*100).toFixed(0)}%"></div></div>`;
+    card.onclick = () => {
+      // Toggle just this subject
+      const allBtn = document.querySelector('[data-subject="all"]');
+      const btn = document.querySelector(`[data-subject="${s}"]`);
+      allBtn.classList.remove('active');
+      if (activeSubjects.has(s) && activeSubjects.size === 1) {
+        activeSubjects.clear(); allBtn.classList.add('active');
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        allBtn.classList.add('active');
+      } else {
+        activeSubjects.clear();
+        activeSubjects.add(s);
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+      }
+      updateStats();
+      buildSubjectGrid();
+    };
+    grid.appendChild(card);
+  });
+}
+
+// ── QUIZ ──
+function startQuiz(cards) {
+  sessionDeck = [...cards].sort(() => Math.random() - 0.5);
+  deck = sessionDeck;
+  deckIndex = 0;
+  correct = 0;
+  wrong = 0;
+  wrongCards = [];
+  showQuiz();
+  showCard();
+}
+
+function showQuiz() {
+  document.getElementById('home').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('quiz').style.display = 'flex';
+}
+
+function showCard() {
+  const card = deck[deckIndex];
+  const total = deck.length;
+  const pct = Math.round((deckIndex / total) * 100);
+  document.getElementById('prog-label').textContent = `Card ${deckIndex + 1} of ${total}`;
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('live-right').textContent = correct;
+  document.getElementById('live-wrong').textContent = wrong;
+
+  if (quizMode === 'write') {
+    document.getElementById('flashcard').style.display = 'none';
+    document.getElementById('flip-toggle').style.display = 'none';
+    document.getElementById('action-row').style.display = 'none';
+    document.getElementById('write-card').style.display = 'block';
+
+    document.getElementById('write-subject-tag').textContent = card.subject;
+    document.getElementById('write-question').textContent = card.q;
+    document.getElementById('write-textarea').value = '';
+    document.getElementById('write-textarea').disabled = false;
+    document.getElementById('write-textarea').focus();
+    document.getElementById('compare-panel').classList.remove('visible');
+    document.getElementById('feedback-panel').classList.remove('visible');
+    document.getElementById('feedback-loading').style.display = 'none';
+    document.getElementById('feedback-content').style.display = 'none';
+    document.getElementById('write-action-row').classList.remove('visible');
+    document.getElementById('compare-btn').disabled = false;
+    document.getElementById('compare-btn').style.display = 'inline-block';
+    updateCompareHint();
+  } else {
+    document.getElementById('flashcard').style.display = '';
+    document.getElementById('write-card').style.display = 'none';
+    document.getElementById('write-action-row').classList.remove('visible');
+
+    document.getElementById('card-question').textContent = card.q;
+    document.getElementById('card-answer').textContent = card.a;
+    document.getElementById('card-subject-tag').textContent = card.subject;
+    document.getElementById('card-subject-tag-back').textContent = card.sub || card.subject;
+
+    const fc = document.getElementById('flashcard');
+    fc.classList.remove('flipped');
+    isFlipped = false;
+    document.getElementById('action-row').style.display = 'none';
+    document.getElementById('flip-toggle').style.display = 'block';
+    document.getElementById('flip-toggle').textContent = 'Flip Card';
+  }
+}
+
+async function showComparison() {
+  const card = deck[deckIndex];
+  const userText = document.getElementById('write-textarea').value.trim();
+  const apiKey = getApiKey();
+
+  document.getElementById('compare-btn').disabled = true;
+  document.getElementById('write-textarea').disabled = true;
+
+  if (apiKey) {
+    // AI grading path
+    document.getElementById('feedback-panel').classList.add('visible');
+    document.getElementById('feedback-loading').style.display = 'flex';
+    document.getElementById('feedback-content').style.display = 'none';
+    document.getElementById('compare-panel').classList.remove('visible');
+
+    try {
+      const result = await gradeWithAI(apiKey, card.q, card.a, userText);
+      renderAIFeedback(result, card.a);
+    } catch (err) {
+      // fallback to plain compare on error
+      console.error(err);
+      document.getElementById('feedback-loading').style.display = 'none';
+      document.getElementById('feedback-panel').classList.remove('visible');
+      showPlainCompare(userText, card.a);
+    }
+  } else {
+    // Plain compare fallback
+    showPlainCompare(userText, card.a);
+  }
+
+  document.getElementById('write-action-row').classList.add('visible');
+  document.getElementById('compare-btn').style.display = 'none';
+  setTimeout(() => document.getElementById('write-action-row').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 300);
+}
+
+function showPlainCompare(userText, modelText) {
+  document.getElementById('your-answer-text').textContent = userText || '(no answer entered)';
+  document.getElementById('model-answer-text').textContent = modelText;
+  document.getElementById('compare-panel').classList.add('visible');
+}
+
+async function gradeWithAI(apiKey, question, modelAnswer, userAnswer) {
+  const prompt = `You are grading a bar exam flashcard answer. Be precise and educational.
+
+QUESTION: ${question}
+
+MODEL ANSWER: ${modelAnswer}
+
+STUDENT'S ANSWER: ${userAnswer || '(blank)'}
+
+Grade the student's answer against the model answer. Return ONLY valid JSON (no markdown, no explanation outside the JSON):
+
+{
+  "score": <integer 1-10>,
+  "summary": "<1-2 sentence overall assessment, honest and direct>",
+  "covered": [<string: specific rule elements the student correctly stated — each item should be a concrete legal point, not vague praise>],
+  "missed": [<string: specific rule elements, tests, exceptions, or distinctions from the model answer that were absent or wrong — be precise, quote the rule element they missed>]
+}
+
+Rules:
+- score 9-10: nearly complete, all key elements present
+- score 7-8: got the core rule but missed 1-2 important elements
+- score 5-6: partial — got the gist but missing significant parts
+- score 3-4: some relevant points but major gaps
+- score 1-2: mostly wrong or blank
+- covered and missed arrays should each have 1-6 items max
+- if the student's answer is blank, score is 1, covered is [], missed lists all key elements`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-allow-browser': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  const raw = data.content[0].text.trim();
+  // strip any accidental markdown fences
+  const jsonStr = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
+  return JSON.parse(jsonStr);
+}
+
+function renderAIFeedback(result, modelAnswer) {
+  document.getElementById('feedback-loading').style.display = 'none';
+  document.getElementById('feedback-content').style.display = 'block';
+
+  const score = result.score ?? 0;
+  const scoreEl = document.getElementById('ai-score');
+  scoreEl.textContent = score;
+  scoreEl.style.color = score >= 8 ? 'var(--green)' : score >= 5 ? 'var(--yellow)' : 'var(--red)';
+
+  document.getElementById('ai-summary').textContent = result.summary || '';
+
+  const covered = result.covered || [];
+  const missed = result.missed || [];
+
+  const covSection = document.getElementById('covered-section');
+  const covList = document.getElementById('covered-list');
+  covSection.style.display = covered.length ? 'block' : 'none';
+  covList.innerHTML = covered.map(item =>
+    `<li class="feedback-item covered"><span class="fi-icon">✓</span><span>${item}</span></li>`
+  ).join('');
+
+  const missSection = document.getElementById('missed-section');
+  const missList = document.getElementById('missed-list');
+  missSection.style.display = missed.length ? 'block' : 'none';
+  missList.innerHTML = missed.map(item =>
+    `<li class="feedback-item missed"><span class="fi-icon">✗</span><span>${item}</span></li>`
+  ).join('');
+
+  document.getElementById('model-answer-full').textContent = modelAnswer;
+}
+
+function toggleModelAnswer() {
+  const el = document.getElementById('model-answer-full');
+  const btn = document.querySelector('.model-answer-toggle');
+  const open = el.classList.toggle('open');
+  btn.textContent = (open ? '▾' : '▸') + ' ' + (open ? 'Hide' : 'Show') + ' full model answer';
+}
+
+function handleWriteKey(e) {
+  // Ctrl/Cmd+Enter to compare
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    showComparison();
+  }
+}
+
+function flipCard() {
+  const fc = document.getElementById('flashcard');
+  isFlipped = !isFlipped;
+  if (isFlipped) {
+    fc.classList.add('flipped');
+    document.getElementById('action-row').style.display = 'flex';
+    document.getElementById('flip-toggle').style.display = 'none';
+  } else {
+    fc.classList.remove('flipped');
+    document.getElementById('action-row').style.display = 'none';
+    document.getElementById('flip-toggle').style.display = 'block';
+  }
+}
+
+function markCard(gotIt) {
+  const card = deck[deckIndex];
+  if (gotIt) {
+    correct++;
+  } else {
+    wrong++;
+    wrongCards.push(card);
+  }
+  deckIndex++;
+  if (deckIndex >= deck.length) {
+    showResults();
+  } else {
+    showCard();
+  }
+}
+
+// ── RESULTS ──
+function showResults() {
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  const total = correct + wrong;
+  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+  const isRetry = deck.length < sessionDeck.length;
+  document.getElementById('result-title').textContent = isRetry ? 'Retry Complete!' : 'Round Complete!';
+  document.getElementById('result-sub').textContent = isRetry
+    ? `You reviewed ${total} missed cards.`
+    : `You reviewed all ${total} cards.`;
+  document.getElementById('score-pct').textContent = pct + '%';
+  document.getElementById('score-fraction').textContent = `${correct} correct out of ${total} cards`;
+  document.getElementById('r-correct').textContent = correct;
+  document.getElementById('r-wrong').textContent = wrong;
+
+  const retryBtn = document.getElementById('btn-retry-wrong');
+  retryBtn.style.display = wrongCards.length > 0 ? 'inline-block' : 'none';
+  if (wrongCards.length > 0) retryBtn.textContent = `Retry ${wrongCards.length} Missed Cards`;
+
+  buildBreakdown();
+}
+
+function buildBreakdown() {
+  const el = document.getElementById('breakdown');
+  // track per-subject from the entire sessionDeck
+  const bySubject = {};
+  sessionDeck.forEach(c => {
+    if (!bySubject[c.subject]) bySubject[c.subject] = { total: 0, wrong: new Set() };
+    bySubject[c.subject].total++;
+  });
+  wrongCards.forEach(c => {
+    if (bySubject[c.subject]) bySubject[c.subject].wrong.add(c.id);
+  });
+
+  let html = '<h3>By Subject</h3>';
+  subjects.forEach(s => {
+    if (!bySubject[s] || bySubject[s].total === 0) return;
+    const d = bySubject[s];
+    const rightCount = d.total - d.wrong.size;
+    const pct = Math.round((rightCount / d.total) * 100);
+    const color = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--red)';
+    html += `<div class="breakdown-row">
+      <span class="breakdown-name">${s}</span>
+      <div class="breakdown-bar"><div class="breakdown-fill" style="width:${pct}%;background:${color}"></div></div>
+      <span class="breakdown-pct" style="color:${color}">${pct}%</span>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function retryWrong() {
+  if (wrongCards.length === 0) return;
+  deck = [...wrongCards].sort(() => Math.random() - 0.5);
+  deckIndex = 0;
+  correct = 0;
+  wrong = 0;
+  wrongCards = [];
+  showQuiz();
+  showCard();
+}
+
+function retryAll() {
+  startQuiz(sessionDeck);
+}
+
+function goHome() {
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('home').style.display = 'block';
+  updateStats();
+  buildSubjectGrid();
+}
+
+document.getElementById('start-btn').onclick = () => {
+  const cards = getFilteredCards();
+  if (cards.length === 0) return;
+  startQuiz(cards);
+};
+
+// keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (document.getElementById('quiz').style.display !== 'flex') return;
+  if (quizMode === 'write') {
+    // write mode: arrow keys only work after comparison is shown
+    const writeActionsVisible = document.getElementById('write-action-row').classList.contains('visible');
+    if (writeActionsVisible) {
+      if (e.code === 'ArrowLeft') markCard(false);
+      if (e.code === 'ArrowRight') markCard(true);
+    }
+    return;
+  }
+  // flip mode
+  if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+    e.preventDefault();
+    flipCard();
+  }
+  if (isFlipped) {
+    if (e.code === 'ArrowLeft') markCard(false);
+    if (e.code === 'ArrowRight') markCard(true);
+  }
+});
+
+init();
+</script>
+</body>
+</html>
